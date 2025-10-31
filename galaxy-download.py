@@ -4,25 +4,7 @@ import argparse
 import os
 import yaml
 from bioblend import galaxy
-
-
-def check_exists(path):
-    """Check that a given file path exists, or raise an ArgumentTypeError."""
-    if os.path.exists(path):
-        return path
-    else:
-        raise argparse.ArgumentTypeError(f"Path does not exists: {path}")
-
-
-def read_configuration(filepath):
-    """Read YAML configuration file."""
-    with open(filepath) as file:
-        try:
-            return yaml.safe_load(file)
-        except yaml.YAMLError as e:
-            print(f"Error parsing YAML file {filepath}: {e}")
-
-    return None
+from dotenv import load_dotenv
 
 
 def create_argparser():
@@ -35,24 +17,24 @@ def create_argparser():
 
     # Positional argument
     parser.add_argument(
-        "-c",
-        "--config-file",
-        type=check_exists,
-        default=".config.yaml",
-        help="Configuration file",
+        "-e",
+        "--envfile",
+        default='.env',
+        help="Configuration environment file",
     )
 
-    # parser.add_argument(
-    #     "--ask-api-key",
-    #     default=None,
-    #     help='Prompt for Galaxy API key'
-    # )
+    parser.add_argument(
+        "--ask-api-key",
+        default=False,
+        action='store_true',
+        help='Prompt for Galaxy API key'
+    )
 
-    # parser.add_argument(
-    #     "--url",
-    #     default=None,
-    #     help='Galaxy URL endpoint'
-    # )
+    parser.add_argument(
+        "--url",
+        default=None,
+        help='Galaxy URL endpoint'
+    )
 
     parser.add_argument(
         "--history-id",
@@ -91,12 +73,23 @@ def download_dataset(dc, dataset_id, filepath):
 
 
 if __name__ == "__main__":
+
+    # parse cli arguments
     args = create_argparser().parse_args()
-    config = read_configuration(args.config_file)
+
+    # read .env and set environment if envfile exists
+    load_dotenv(args.envfile)
+
+    if args.ask_api_key:
+        from getpass import getpass
+        os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
+
+    if args.url:
+        os.environ["GALAXY_URL"] = arg.url
 
     gi = galaxy.GalaxyInstance(
-        url=config["GALAXY_URL"],
-        key=config["GALAXY_API_KEY"],
+        url=os.environ["GALAXY_URL"],
+        key=os.environ["GALAXY_API_KEY"],
     )
     dc = galaxy.datasets.DatasetClient(gi)
 
