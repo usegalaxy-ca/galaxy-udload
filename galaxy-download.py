@@ -2,9 +2,12 @@
 
 import argparse
 import os
-import yaml
 from bioblend import galaxy
 from dotenv import load_dotenv
+import logging
+
+
+LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 
 def create_argparser():
@@ -19,22 +22,18 @@ def create_argparser():
     parser.add_argument(
         "-e",
         "--envfile",
-        default='.env',
+        default=".env",
         help="Configuration environment file",
     )
 
     parser.add_argument(
         "--ask-api-key",
         default=False,
-        action='store_true',
-        help='Prompt for Galaxy API key'
+        action="store_true",
+        help="Prompt for Galaxy API key",
     )
 
-    parser.add_argument(
-        "--url",
-        default=None,
-        help='Galaxy URL endpoint'
-    )
+    parser.add_argument("--url", default=None, help="Galaxy URL endpoint")
 
     parser.add_argument(
         "--history-id",
@@ -60,11 +59,18 @@ def create_argparser():
         help="Output directory or file name to write to.",
     )
 
+    parser.add_argument(
+        "-v", "--verbose", action="count", default=0, help="Enable verbosity"
+    )
+
     return parser
 
 
 def download_dataset(dc, dataset_id, filepath):
     """Download dataset to disk at file path."""
+    logging.info(
+        f"Downloading dataset with id `{dataset_id}` at {os.path.relpath(filepath)}"
+    )
     dc.download_dataset(
         dataset_id=dataset_id,
         file_path=filepath,
@@ -73,19 +79,24 @@ def download_dataset(dc, dataset_id, filepath):
 
 
 if __name__ == "__main__":
-
     # parse cli arguments
     args = create_argparser().parse_args()
 
     # read .env and set environment if envfile exists
     load_dotenv(args.envfile)
 
+    logging.basicConfig(level=LOG_LEVELS[min(args.verbose, len(LOG_LEVELS) - 1)])
+
     if args.ask_api_key:
         from getpass import getpass
+
+        logging.debug("Asking UseGalaxy API key.")
         os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
+        logging.debug("Setting GALAXY_API_KEY variable.")
 
     if args.url:
-        os.environ["GALAXY_URL"] = arg.url
+        os.environ["GALAXY_URL"] = args.url
+        logging.debug("Set GALAXY_URL variable.")
 
     gi = galaxy.GalaxyInstance(
         url=os.environ["GALAXY_URL"],
