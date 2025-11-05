@@ -90,13 +90,10 @@ if __name__ == "__main__":
     if args.ask_api_key:
         from getpass import getpass
 
-        logging.debug("Asking UseGalaxy API key.")
         os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
-        logging.debug("Setting GALAXY_API_KEY variable.")
 
     if args.url:
         os.environ["GALAXY_URL"] = args.url
-        logging.debug("Set GALAXY_URL variable.")
 
     gi = galaxy.GalaxyInstance(
         url=os.environ["GALAXY_URL"],
