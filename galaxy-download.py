@@ -13,8 +13,8 @@ LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 def create_argparser():
     """Create the arguments parser."""
     parser = argparse.ArgumentParser(
-        prog="galaxy-upload",
-        description="UseGalaxy file upload utility.",
+        prog="galaxy-download",
+        description="UseGalaxy file download utility.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
