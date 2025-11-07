@@ -1,20 +1,41 @@
-# galaxy-upload
-Simple program to assist in uploading files to any Galaxy instances (default is https://usegalaxy.ca). You
-will need to generate a secret key in your Galaxy account under "User/Preferences/Manage API Key".
+# galaxy-udload
+UseGalaxy upload/download utility, to assist in downloading or uploading files.
 
-# install
-- virtualenv venv
-- pip install bioblend
+# Get you API Key
+From UseGalaxy, under User Preferences, select Manage API Key and create an API Key.
+
+# Configuration file
+On the desired system, create a file `.env` that follow the format:
+```bash
+GALAXY_API_KEY=<you API key>
+GALAXY_URL=https://usegalaxy.ca
+```
+
+# Installation
+0. Load any python module (Alliance's system)
+1. Create a virtual environment:
+```bash
+virtualenv ~/ENV && source ~/ENV/bin/activate
+```
+2. Install the utility:
+```bash
+pip install git+https://github.com/usegalaxy-ca/galaxy-udload@v0.1.0
+```
 
 # Usage
+## Upload
+Upload one or more files to a specific history.
+```bash
+galaxy-upload --env path/to/.env --history-id <id> --file A B C...
 ```
-python3 galaxy-upload.py galaxy_url=<Galaxy URL> key=<your Galaxy API key> histid=<History ID> filepath=<Full path name of the file to upload>
+
+## Download
+Download a dataset locally.
+```bash
+galaxy-download --env path/to/.env --dataset-id <id>
 ```
 
-- If you omit the Galaxy URL the default will be https://usegalaxy.ca
-
-- If you omit your Galaxy API secret key you will be promped to provide it. 
-
-- If you omit the <History ID> the program will give you the list of your histories you can choose from
-
-- If you omit the filepath you will be able to navigate trough your directories and select the file
+Download a dataset to a specific name, or directory
+```bash
+galaxy-download --env path/to/.env --dataset-id <id> --path <filename|directory/filename>
+```
