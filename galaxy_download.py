@@ -54,7 +54,7 @@ def create_argparser():
     )
 
     parser.add_argument(
-        "--filepath",
+        "--path",
         default=os.getcwd(),
         help="Output directory or file name to write to.",
     )
@@ -66,15 +66,15 @@ def create_argparser():
     return parser
 
 
-def download_dataset(dc, dataset_id, filepath):
+def download_dataset(dc, dataset_id, path):
     """Download dataset to disk at file path."""
     logging.info(
-        f"Downloading dataset with id `{dataset_id}` at {os.path.relpath(filepath)}"
+        f"Downloading dataset with id `{dataset_id}` at {os.path.relpath(path)}"
     )
     dc.download_dataset(
         dataset_id=dataset_id,
-        file_path=filepath,
-        use_default_filename=os.path.isdir(filepath),
+        file_path=path,
+        use_default_filename=os.path.isdir(path),
     )
 
 
@@ -101,7 +101,7 @@ def main(args=create_argparser().parse_args()):
     dc = galaxy.datasets.DatasetClient(gi)
 
     if args.dataset_id:
-        download_dataset(dc, args.dataset_id, args.filepath)
+        download_dataset(dc, args.dataset_id, args.path)
     elif args.dataset_name:
         # get a list of recent datasets, filtered on given name, and history (if provided)
         datasets = dc.get_datasets(
@@ -114,7 +114,7 @@ def main(args=create_argparser().parse_args()):
         )
 
         for dataset in datasets:
-            download_dataset(dc, dataset["id"], args.filepath)
+            download_dataset(dc, dataset["id"], args.path)
 
 
 if __name__ == "__main__":
