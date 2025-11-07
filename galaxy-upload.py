@@ -5,6 +5,7 @@ import os
 from bioblend import galaxy
 from dotenv import load_dotenv
 from rich.progress import track
+from tusclient.fingerprint import fingerprint
 
 
 def create_argparser():
@@ -54,8 +55,28 @@ def create_argparser():
 
     return parser
 
-if __name__ == "__main__":
 
+def upload_file(gi, file, history_id, storage):
+    try:
+        gi.tools.upload_file(
+            path=file,
+            history_id=history_id,
+            storage=storage,
+            auto_decompress=True,
+        )
+    except ConnectionError as ex:
+        if ex.status_code == 404 and storage:
+            with open(file, "rb") as fh:
+                fingerprinter = fingerprint.Fingerprint()
+                fp_hash = fingerprinter.get_fingerprint(fh)
+            print(
+                f"Unable to resume, previous upload may have been removed from server (hint: remove {fp_hash} from {storage} or change storage to reupload from the start: {ex}"
+            )
+        else:
+            print(ex)
+
+
+if __name__ == "__main__":
     # parse cli arguments
     args = create_argparser().parse_args()
 
@@ -76,11 +97,6 @@ if __name__ == "__main__":
 
     for file in track(args.file, description="[cyan]Uploading..."):
         if os.path.exists(file):
-            gi.tools.upload_file(
-                path=file,
-                history_id=args.history_id,
-                storage=args.checkpoints,
-                auto_decompress=True,
-            )
+            upload_file(gi, file, args.history_id, args.checkpoints)
         else:
-            print(f'{file} does not exists...skipping!')
+            print(f"{file} does not exists...skipping!")
