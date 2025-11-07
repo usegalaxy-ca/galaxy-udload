@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "galaxy-udfile"
+version = "0.1.0"
+description = "File utility to upload or download file from or to UseGalaxy"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+    { name = "Charles Coulombe" },
+    { name = "Carol Gauthier" },
+]
+
+dependencies = [
+    "bioblend",
+    "python-dotenv",
+    "rich",
+]
+
+[project.scripts]
+galaxy-upload = "galaxy_upload:main"
+galaxy-download = "galaxy_download:main"
+
+[tool.setuptools]
+py-modules = ["galaxy_upload", "galaxy_download"]

@@ -78,9 +78,8 @@ def download_dataset(dc, dataset_id, filepath):
     )
 
 
-if __name__ == "__main__":
-    # parse cli arguments
-    args = create_argparser().parse_args()
+def main(args=create_argparser().parse_args()):
+    """Main section, to be called as main script, or callable script."""
 
     # read .env and set environment if envfile exists
     load_dotenv(args.envfile)
@@ -116,3 +115,7 @@ if __name__ == "__main__":
 
         for dataset in datasets:
             download_dataset(dc, dataset["id"], args.filepath)
+
+
+if __name__ == "__main__":
+    main()
