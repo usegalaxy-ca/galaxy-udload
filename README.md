@@ -17,7 +17,11 @@ GALAXY_URL=https://usegalaxy.ca
 ```bash
 virtualenv ~/ENV && source ~/ENV/bin/activate
 ```
-2. Install the utility:
+2. Install the utility (from stable branch):
+```bash
+pip install git+https://github.com/usegalaxy-ca/galaxy-udload@main
+```
+or specify a tag
 ```bash
 pip install git+https://github.com/usegalaxy-ca/galaxy-udload@v0.1.0
 ```
