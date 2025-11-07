@@ -25,3 +25,5 @@ ENV/
 # mkdocs documentation
 /site
 docs/_build/
+
+.checkpoints
