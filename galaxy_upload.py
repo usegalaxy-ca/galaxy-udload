@@ -4,8 +4,24 @@ import argparse
 import os
 from bioblend import galaxy
 from dotenv import load_dotenv
-from rich.progress import track
+import rich.progress
 from tusclient.fingerprint import fingerprint
+
+
+def progress_bar(file, total=None):
+    """Create a progress bar for the current transfer."""
+    bar = rich.progress.Progress(
+        rich.progress.TextColumn("[progress.description]{task.description}"),
+        rich.progress.BarColumn(),
+        rich.progress.DownloadColumn(),
+        rich.progress.TransferSpeedColumn(),
+        rich.progress.TextColumn("eta"),
+        rich.progress.TimeRemainingColumn(),
+    )
+
+    task_id = bar.add_task(file, total=total)
+
+    return bar, task_id
 
 
 def create_argparser():
@@ -56,14 +72,26 @@ def create_argparser():
     return parser
 
 
-def upload_file(gi, file, history_id, storage):
+def upload_file(gi, path, history_id, storage):
+    filename = os.path.basename(path)
+
     try:
-        gi.tools.upload_file(
-            path=file,
-            history_id=history_id,
+        uploader = gi.get_tus_uploader(
+            path=path,
             storage=storage,
-            auto_decompress=True,
         )
+        filesize = os.path.getsize(path)
+
+        progress, task_id = progress_bar(filename, total=filesize)
+        with progress:
+            last_offset = 0
+            while uploader.offset < filesize:
+                uploader.upload_chunk()
+                progress.update(task_id, advance=(uploader.offset - last_offset))
+                last_offset = uploader.offset
+
+        gi.tools.post_to_fetch(path, history_id, uploader.session_id, auto_decompress=True, file_name=filename)
+
     except ConnectionError as ex:
         if ex.status_code == 404 and storage:
             with open(file, "rb") as fh:
@@ -94,7 +122,7 @@ def main(args=create_argparser().parse_args()):
         key=os.environ["GALAXY_API_KEY"],
     )
 
-    for file in track(args.file, description="[cyan]Uploading..."):
+    for file in args.file:
         if os.path.exists(file):
             upload_file(gi, file, args.history_id, args.checkpoints)
         else:
