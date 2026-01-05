@@ -94,7 +94,7 @@ def upload_file(gi, path, history_id, storage):
 
     except ConnectionError as ex:
         if ex.status_code == 404 and storage:
-            with open(file, "rb") as fh:
+            with open(storage, "rb") as fh:
                 fingerprinter = fingerprint.Fingerprint()
                 fp_hash = fingerprinter.get_fingerprint(fh)
             print(
