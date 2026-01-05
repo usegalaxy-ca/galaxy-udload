@@ -2,10 +2,12 @@
 
 import argparse
 import os
-from bioblend import galaxy
+from bioblend import galaxy, ConnectionError
 from dotenv import load_dotenv
 import rich.progress
 from tusclient.fingerprint import fingerprint
+import rich.table
+from .galaxy_history import find_history
 
 
 def progress_bar(file, total=None):
@@ -52,8 +54,21 @@ def create_argparser():
     parser.add_argument(
         "--history-id",
         default=None,
-        required=True,
         help="History id to filter on",
+    )
+
+    parser.add_argument(
+        "--history-name",
+        default=None,
+        help="History name to filter on",
+    )
+
+    parser.add_argument(
+        "-i",
+        "--ignore-case",
+        default=False,
+        action="store_true",
+        help='Search for histories by ignoring case'
     )
 
     parser.add_argument(
@@ -122,9 +137,11 @@ def main(args=create_argparser().parse_args()):
         key=os.environ["GALAXY_API_KEY"],
     )
 
+    history_id = args.history_id if args.history_id else handle_find_history(gi, args.history_name, args.ignore_case)[0]["id"]
+
     for file in args.file:
         if os.path.exists(file):
-            upload_file(gi, file, args.history_id, args.checkpoints)
+            upload_file(gi, file, history_id, args.checkpoints)
         else:
             print(f"{file} does not exists...skipping!")
 
