@@ -139,4 +139,4 @@ def handle_upload(args):
         if os.path.exists(file):
             upload_file(args.gi, file, history_id, args.checkpoints)
         else:
-            print(f"{file} does not exists...skipping!")
+            console.print(f"[italic yellow]{file}[/italic yellow] does not exists...skipping!")
