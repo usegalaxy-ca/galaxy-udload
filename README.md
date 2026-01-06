@@ -43,3 +43,7 @@ Download a dataset to a specific name, or directory
 ```bash
 galaxy-download --env path/to/.env --dataset-id <id> --path <filename|directory/filename>
 ```
+
+## Acknowledgment
+This project was inspired by the [Galaxy Project’s galaxy-upload repository](https://github.com/galaxyproject/galaxy-upload).  
+We appreciate their work, which provided valuable inspiration in shaping this code base.
