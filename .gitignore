@@ -27,3 +27,4 @@ ENV/
 docs/_build/
 
 .checkpoints
+_version.py

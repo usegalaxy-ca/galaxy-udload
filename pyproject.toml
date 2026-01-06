@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools>=77.0.3"]
+requires = ["setuptools>=77.0.3", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "galaxy-udload"
-version = "0.2.0"
+dynamic = ["version"]
 description = "File utility to upload or download file from or to UseGalaxy"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -27,3 +27,6 @@ galaxy-history = "galaxy_udload.history:main"
 
 [tool.setuptools]
 packages = ["galaxy_udload"]
+
+[tool.setuptools_scm]
+write_to = "galaxy_udload/_version.py"
