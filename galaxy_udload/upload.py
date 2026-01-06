@@ -75,33 +75,21 @@ def register_subcommand(subparser):
 def upload_file(gi, path, history_id, storage):
     filename = os.path.basename(path)
 
-    try:
-        uploader = gi.get_tus_uploader(
-            path=path,
-            storage=storage,
-        )
-        filesize = os.path.getsize(path)
+    uploader = gi.get_tus_uploader(
+        path=path,
+        storage=storage,
+    )
+    filesize = os.path.getsize(path)
 
-        progress, task_id = progress_bar(filename, total=filesize)
-        with progress:
-            last_offset = 0
-            while uploader.offset < filesize:
-                uploader.upload_chunk()
-                progress.update(task_id, advance=(uploader.offset - last_offset))
-                last_offset = uploader.offset
+    progress, task_id = progress_bar(filename, total=filesize)
+    with progress:
+        last_offset = 0
+        while uploader.offset < filesize:
+            uploader.upload_chunk()
+            progress.update(task_id, advance=(uploader.offset - last_offset))
+            last_offset = uploader.offset
 
-        gi.tools.post_to_fetch(path, history_id, uploader.session_id, auto_decompress=True, file_name=filename)
-
-    except ConnectionError as ex:
-        if ex.status_code == 404 and storage:
-            with open(storage, "rb") as fh:
-                fingerprinter = fingerprint.Fingerprint()
-                fp_hash = fingerprinter.get_fingerprint(fh)
-            print(
-                f"Unable to resume, previous upload may have been removed from server (hint: remove {fp_hash} from {storage} or change storage to reupload from the start: {ex}"
-            )
-        else:
-            print(ex)
+    gi.tools.post_to_fetch(path, history_id, uploader.session_id, auto_decompress=True, file_name=filename)
 
 
 def find_history(gi, history_name=None, ignore_case=False):
@@ -135,8 +123,19 @@ def handle_upload(args):
         console.print(f"\n[bold red]ERROR[/bold red]: {ex}")
         sys.exit(1)
 
-    for file in args.file:
-        if os.path.exists(file):
-            upload_file(args.gi, file, history_id, args.checkpoints)
+    try:
+        for file in args.file:
+            if os.path.exists(file):
+                upload_file(args.gi, file, history_id, args.checkpoints)
+            else:
+                console.print(f"[italic yellow]{file}[/italic yellow] does not exists...skipping!")
+    except ConnectionError as ex:
+        if ex.status_code == 404 and args.checkpoints:
+            with open(args.checkpoints, "rb") as fh:
+                fingerprinter = fingerprint.Fingerprint()
+                fp_hash = fingerprinter.get_fingerprint(fh)
+            console.print(
+                f"Unable to resume, previous upload may have been removed from server (hint: remove {fp_hash} from {args.checkpoints} or change storage to reupload from the start: {ex}"
+            )
         else:
-            console.print(f"[italic yellow]{file}[/italic yellow] does not exists...skipping!")
+            console.print(ex)
