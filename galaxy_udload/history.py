@@ -6,9 +6,32 @@ from bioblend import galaxy
 from dotenv import load_dotenv
 import rich.progress
 import re
-import sys
 import datetime
 import rich.table
+
+
+class HistoryNotFoundError(Exception):
+    """Raised when no Galaxy histories match the query."""
+    def __init__(self, history_name):
+        super().__init__(f"No histories matching [italic yellow]{history_name}[/italic yellow] found!")
+
+
+class HistoryAmbiguousError(Exception):
+    """Raised when multiple Galaxy histories match the query."""
+    def __init__(self, history_name, histories):
+        if not history_name:
+            msg = (
+                "Multiple histories found!\n"
+                "Select one by specifying an id with [italic green]--history-id[/italic green] "
+                "or a name with [italic green]--history-name[/italic green]."
+            )
+        else:
+            msg = (
+                f"Multiple histories matching [italic yellow]{history_name}[/italic yellow] found!\n"
+                "Select one by specifying an id with [italic green]--history-id[/italic green]."
+            )
+        super().__init__(msg)
+        self.histories = histories
 
 
 def create_table(histories=[]):
@@ -90,70 +113,6 @@ def filter_histories(gi, history_name=None, ignore_case=False):
     pattern = re.compile(history_name, flags=flags)
 
     return [history for history in histories if pattern.search(history["name"])]
-
-
-def handle_find_history(gi, history_name=None, ignore_case=False):
-    """
-    Locate Galaxy histories and handle ambiguous or missing matches.
-
-    This function searches for histories using `filter_histories` and then
-    handles three cases:
-
-    1. **No matches** — prints an error message and exits.
-    2. **Multiple matches** — displays a table of histories, prints guidance
-       on how to disambiguate, and exits.
-    3. **Exactly one match** — returns the matching history.
-
-    Parameters
-    ----------
-    gi : object
-        A GalaxyInstance-like object providing access to histories.
-    history_name : str, optional
-        A substring or regular expression used to filter history names.
-        If None, all histories are considered.
-    ignore_case : bool, optional
-        If True, performs case-insensitive matching.
-
-    Returns
-    -------
-    list of dict
-        A list containing exactly one matching history. The function will
-        terminate the program if zero or multiple histories are found.
-
-    Side Effects
-    ------------
-    - Prints tables and error messages using `rich.console.Console`.
-    - Calls `sys.exit(1)` when no valid single match is found.
-    """
-    msg = None
-    console = rich.console.Console()
-
-    histories = filter_histories(gi, history_name, ignore_case)
-
-    if not histories:
-        msg = f"No histories matching [italic yellow]{history_name}[/italic yellow] found!"
-
-    if len(histories) > 1:
-        table = create_table(histories=histories)
-        console.print(table)
-
-        if not history_name:
-            msg = (
-                "Multiple histories found!\n"
-                "Select one by specifying an id with [italic green]--history-id[/italic green] "
-                "or a name with [italic green]--history-name[/italic green]."
-            )
-        else:
-            msg = (
-                f"Multiple histories matching [italic yellow]{history_name}[/italic yellow] found!\n"
-                "Select one by specifying an id with [italic green]--history-id[/italic green]."
-            )
-
-    if msg:
-        console.print(f"\n[bold red]ERROR[/bold red]: {msg}")
-        sys.exit(1)
-
-    return histories
 
 
 def create_argparser():

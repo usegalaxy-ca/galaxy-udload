@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 import rich.progress
 from tusclient.fingerprint import fingerprint
 import rich.table
-from .history import handle_find_history
+from .history import filter_histories, create_table, HistoryAmbiguousError, HistoryNotFoundError
+import sys
 
 
 def progress_bar(file, total=None):
@@ -119,6 +120,20 @@ def upload_file(gi, path, history_id, storage):
             print(ex)
 
 
+def find_history(gi, history_name=None, ignore_case=False):
+    """ Find an history based on name."""
+
+    histories = filter_histories(gi, history_name, ignore_case)
+
+    if not histories:
+        raise HistoryNotFoundError(history_name)
+
+    if len(histories) > 1:
+        raise HistoryAmbiguousError(history_name, histories)
+
+    return histories[0]['id']
+
+
 def main(args=None):
     """Main section, to be called as main script, or callable script."""
 
@@ -140,7 +155,19 @@ def main(args=None):
         key=os.environ["GALAXY_API_KEY"],
     )
 
-    history_id = args.history_id if args.history_id else handle_find_history(gi, args.history_name, args.ignore_case)[0]["id"]
+    console = rich.console.Console()
+
+    try:
+        history_id = args.history_id if args.history_id else find_history(gi, args.history_name, args.ignore_case)
+    except HistoryAmbiguousError as ex:
+        table = create_table(ex.histories)
+        console.print(table)
+        console.print(f"\n[bold red]ERROR[/bold red]: {ex}")
+        sys.exit(1)
+
+    except HistoryNotFoundError as ex:
+        console.print(f"\n[bold red]ERROR[/bold red]: {ex}")
+        sys.exit(1)
 
     for file in args.file:
         if os.path.exists(file):
