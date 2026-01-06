@@ -20,6 +20,12 @@ dependencies = [
     "rich",
 ]
 
+[project.optional-dependencies]
+docs = [
+    "mkdocs-material>=9.7.1",
+    "click==8.2.1" # bug with mkdocs livereload with higher version
+]
+
 [project.scripts]
 galaxy = "galaxy_udload.main:main"
 
