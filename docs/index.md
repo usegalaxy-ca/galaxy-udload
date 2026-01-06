@@ -23,7 +23,7 @@ pip install git+https://github.com/usegalaxy-ca/galaxy-udload@main
 ```
 or specify a tag
 ```bash
-pip install git+https://github.com/usegalaxy-ca/galaxy-udload@v0.1.0
+pip install git+https://github.com/usegalaxy-ca/galaxy-udload@v1.0.0
 ```
 
 # Quick Usage
