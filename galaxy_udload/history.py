@@ -228,10 +228,12 @@ def create_argparser():
     return parser
 
 
-def main(args=create_argparser().parse_args()):
+def main(args=None):
     """
     Entry point.
     """
+    if not args:
+        args = create_argparser().parse_args()
 
     # read .env and set environment if envfile exists
     load_dotenv(args.envfile)

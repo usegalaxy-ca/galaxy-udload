@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 import rich.progress
 from tusclient.fingerprint import fingerprint
 import rich.table
-from .galaxy_history import find_history
+from .history import handle_find_history
 
 
 def progress_bar(file, total=None):
@@ -119,8 +119,11 @@ def upload_file(gi, path, history_id, storage):
             print(ex)
 
 
-def main(args=create_argparser().parse_args()):
+def main(args=None):
     """Main section, to be called as main script, or callable script."""
+
+    if not args:
+        args = create_argparser().parse_args()
 
     # read .env and set environment if envfile exists
     load_dotenv(args.envfile)

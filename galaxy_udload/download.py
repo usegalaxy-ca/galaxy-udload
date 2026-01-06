@@ -78,8 +78,10 @@ def download_dataset(dc, dataset_id, path):
     )
 
 
-def main(args=create_argparser().parse_args()):
+def main(args=None):
     """Main section, to be called as main script, or callable script."""
+    if not args:
+        args = create_argparser().parse_args()
 
     # read .env and set environment if envfile exists
     load_dotenv(args.envfile)

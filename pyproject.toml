@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "galaxy-udload"
-version = "0.1.0"
+version = "0.2.0"
 description = "File utility to upload or download file from or to UseGalaxy"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -21,8 +21,9 @@ dependencies = [
 ]
 
 [project.scripts]
-galaxy-upload = "galaxy_upload:main"
-galaxy-download = "galaxy_download:main"
+galaxy-upload = "galaxy_udload.upload:main"
+galaxy-download = "galaxy_udload.download:main"
+galaxy-history = "galaxy_udload.history:main"
 
 [tool.setuptools]
-py-modules = ["galaxy_upload", "galaxy_download"]
+packages = ["galaxy_udload"]
