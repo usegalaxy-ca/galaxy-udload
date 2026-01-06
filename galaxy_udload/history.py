@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-from bioblend import galaxy
-from dotenv import load_dotenv
 import rich.progress
 import re
 import datetime
@@ -115,7 +112,7 @@ def filter_histories(gi, history_name=None, ignore_case=False):
     return [history for history in histories if pattern.search(history["name"])]
 
 
-def create_argparser():
+def register_subcommand(subparser):
     """
     Create and configure the command‑line argument parser.
 
@@ -124,27 +121,11 @@ def create_argparser():
     argparse.ArgumentParser
         A fully configured argument parser ready for use by the CLI.
     """
-    parser = argparse.ArgumentParser(
-        prog="galaxy-history",
+    parser = subparser.add_parser(
+        name="history",
         description="UseGalaxy history utility.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-
-    parser.add_argument(
-        "-e",
-        "--envfile",
-        default=".env",
-        help="Configuration environment file",
-    )
-
-    parser.add_argument(
-        "--ask-api-key",
-        default=False,
-        action="store_true",
-        help="Prompt for Galaxy API key",
-    )
-
-    parser.add_argument("--url", default=None, help="Galaxy URL endpoint")
 
     parser.add_argument(
         "-l",
@@ -184,51 +165,31 @@ def create_argparser():
         help="Display most recent history (not deleted)",
     )
 
+    parser.set_defaults(func=handle_history)
+
     return parser
 
 
-def main(args=None):
+def handle_history(args):
     """
-    Entry point.
+    Sub-entry point.
     """
-    if not args:
-        args = create_argparser().parse_args()
-
-    # read .env and set environment if envfile exists
-    load_dotenv(args.envfile)
-
-    if args.ask_api_key:
-        from getpass import getpass
-        os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
-
-    if args.url:
-        os.environ["GALAXY_URL"] = args.url
-
-    gi = galaxy.GalaxyInstance(
-        url=os.environ["GALAXY_URL"],
-        key=os.environ["GALAXY_API_KEY"],
-    )
-
     console = rich.console.Console()
 
     if args.history_id:
-        end_msg = "[green]exists[/green]" if history_exists(gi, args.history_id) else "[yellow]does not exists[/yellow]"
+        end_msg = "[green]exists[/green]" if history_exists(args.gi, args.history_id) else "[yellow]does not exists[/yellow]"
         console.print(f"History with id [italic cyan]{args.history_id}[/italic cyan] {end_msg}")
     else:
         histories = []
 
         if args.recent:
-            histories = [gi.histories.get_most_recently_used_history()]
+            histories = [args.gi.histories.get_most_recently_used_history()]
 
         elif args.list and args.history_name is None:
-            histories = filter_histories(gi)  # filter on nothing -> list all
+            histories = filter_histories(args.gi)  # filter on nothing -> list all
 
         elif args.history_name:
-            histories = filter_histories(gi, args.history_name, args.ignore_case)
+            histories = filter_histories(args.gi, args.history_name, args.ignore_case)
 
         table = create_table(histories)
         console.print(table)
-
-
-if __name__ == "__main__":
-    main()

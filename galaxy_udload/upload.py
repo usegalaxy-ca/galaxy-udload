@@ -2,8 +2,7 @@
 
 import argparse
 import os
-from bioblend import galaxy, ConnectionError
-from dotenv import load_dotenv
+from bioblend import ConnectionError
 import rich.progress
 from tusclient.fingerprint import fingerprint
 import rich.table
@@ -27,30 +26,13 @@ def progress_bar(file, total=None):
     return bar, task_id
 
 
-def create_argparser():
+def register_subcommand(subparser):
     """Create the arguments parser."""
-    parser = argparse.ArgumentParser(
-        prog="galaxy-upload",
+    parser = subparser.add_parser(
+        name="upload",
         description="UseGalaxy file upload utility.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-
-    # Positional argument
-    parser.add_argument(
-        "-e",
-        "--envfile",
-        default=".env",
-        help="Configuration environment file",
-    )
-
-    parser.add_argument(
-        "--ask-api-key",
-        default=False,
-        action="store_true",
-        help="Prompt for Galaxy API key",
-    )
-
-    parser.add_argument("--url", default=None, help="Galaxy URL endpoint")
 
     parser.add_argument(
         "--history-id",
@@ -84,6 +66,8 @@ def create_argparser():
         default=os.path.join(os.getcwd(), ".checkpoints"),
         help="Checkpoints file",
     )
+
+    parser.set_defaults(func=handle_upload)
 
     return parser
 
@@ -134,31 +118,13 @@ def find_history(gi, history_name=None, ignore_case=False):
     return histories[0]['id']
 
 
-def main(args=None):
+def handle_upload(args):
     """Main section, to be called as main script, or callable script."""
-
-    if not args:
-        args = create_argparser().parse_args()
-
-    # read .env and set environment if envfile exists
-    load_dotenv(args.envfile)
-
-    if args.ask_api_key:
-        from getpass import getpass
-        os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
-
-    if args.url:
-        os.environ["GALAXY_URL"] = args.url
-
-    gi = galaxy.GalaxyInstance(
-        url=os.environ["GALAXY_URL"],
-        key=os.environ["GALAXY_API_KEY"],
-    )
 
     console = rich.console.Console()
 
     try:
-        history_id = args.history_id if args.history_id else find_history(gi, args.history_name, args.ignore_case)
+        history_id = args.history_id if args.history_id else find_history(args.gi, args.history_name, args.ignore_case)
     except HistoryAmbiguousError as ex:
         table = create_table(ex.histories)
         console.print(table)
@@ -171,10 +137,6 @@ def main(args=None):
 
     for file in args.file:
         if os.path.exists(file):
-            upload_file(gi, file, history_id, args.checkpoints)
+            upload_file(args.gi, file, history_id, args.checkpoints)
         else:
             print(f"{file} does not exists...skipping!")
-
-
-if __name__ == "__main__":
-    main()

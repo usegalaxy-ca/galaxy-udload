@@ -3,37 +3,19 @@
 import argparse
 import os
 from bioblend import galaxy
-from dotenv import load_dotenv
 import logging
 
 
 LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 
-def create_argparser():
+def register_subcommand(subparser):
     """Create the arguments parser."""
-    parser = argparse.ArgumentParser(
-        prog="galaxy-download",
+    parser = subparser.add_parser(
+        name="download",
         description="UseGalaxy file download utility.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-
-    # Positional argument
-    parser.add_argument(
-        "-e",
-        "--envfile",
-        default=".env",
-        help="Configuration environment file",
-    )
-
-    parser.add_argument(
-        "--ask-api-key",
-        default=False,
-        action="store_true",
-        help="Prompt for Galaxy API key",
-    )
-
-    parser.add_argument("--url", default=None, help="Galaxy URL endpoint")
 
     parser.add_argument(
         "--history-id",
@@ -63,6 +45,8 @@ def create_argparser():
         "-v", "--verbose", action="count", default=0, help="Enable verbosity"
     )
 
+    parser.set_defaults(func=handle_download)
+
     return parser
 
 
@@ -78,29 +62,9 @@ def download_dataset(dc, dataset_id, path):
     )
 
 
-def main(args=None):
+def handle_download(args):
     """Main section, to be called as main script, or callable script."""
-    if not args:
-        args = create_argparser().parse_args()
-
-    # read .env and set environment if envfile exists
-    load_dotenv(args.envfile)
-
-    logging.basicConfig(level=LOG_LEVELS[min(args.verbose, len(LOG_LEVELS) - 1)])
-
-    if args.ask_api_key:
-        from getpass import getpass
-
-        os.environ["GALAXY_API_KEY"] = getpass("UseGalaxy API key: ")
-
-    if args.url:
-        os.environ["GALAXY_URL"] = args.url
-
-    gi = galaxy.GalaxyInstance(
-        url=os.environ["GALAXY_URL"],
-        key=os.environ["GALAXY_API_KEY"],
-    )
-    dc = galaxy.datasets.DatasetClient(gi)
+    dc = galaxy.datasets.DatasetClient(args.gi)
 
     if args.dataset_id:
         download_dataset(dc, args.dataset_id, args.path)
@@ -117,7 +81,3 @@ def main(args=None):
 
         for dataset in datasets:
             download_dataset(dc, dataset["id"], args.path)
-
-
-if __name__ == "__main__":
-    main()
