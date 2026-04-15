@@ -7,7 +7,7 @@ name = "galaxy-udload"
 dynamic = ["version"]
 description = "File utility to upload or download file from or to UseGalaxy"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 authors = [
     { name = "Charles Coulombe" },
