@@ -50,8 +50,8 @@ def create_table(histories=[]):
     """
     # Table setup
     table = rich.table.Table()
-    table.add_column("id", style="cyan", no_wrap=True)
-    table.add_column("name", style="green")
+    table.add_column("history id", style="cyan", no_wrap=True)
+    table.add_column("history name", style="green")
     table.add_column("last modified", style="dark_orange")
 
     # Add rows

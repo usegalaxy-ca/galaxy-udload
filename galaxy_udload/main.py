@@ -4,7 +4,7 @@ import argparse
 import os
 from bioblend import galaxy
 from dotenv import load_dotenv
-from . import upload, download, history
+from . import upload, download, history, dataset
 
 
 def create_argparser():
@@ -40,6 +40,7 @@ def create_argparser():
     upload.register_subcommand(subparsers)
     download.register_subcommand(subparsers)
     history.register_subcommand(subparsers)
+    dataset.register_subcommand(subparsers)
 
     return parser
 
