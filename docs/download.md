@@ -30,11 +30,13 @@ Download a dataset to a specific name, or directory
 galaxy download --dataset-id <id> --path <filename|directory/filename>
 ```
 
+### All datasets from an history
 Download all datasets from a given history
 ```bash
 galaxy download --history-id <history-id>
 ```
 
+### With a matching name
 Download matching datasets (by name)
 ```bash
 galaxy download --dataset-name "pasted" --history-id <history-id> -i
