@@ -46,6 +46,12 @@ galaxy history
 ```
 For more information, see [History](./history.md)
 
+## Datasets
+```bash
+galaxy dataset
+```
+For more information, see [Dataset](./dataset.md)
+
 ## Acknowledgment
 This project was inspired by the [Galaxy Project’s galaxy-upload repository](https://github.com/galaxyproject/galaxy-upload).  
 We appreciate their work, which provided valuable inspiration in shaping this code base.
