@@ -1,12 +1,18 @@
-#!/usr/bin/env python3
-
 import argparse
 import os
-from bioblend import galaxy
-import logging
+import sys
+
+import rich.console
+from rich.progress import track
+
+from .dataset import (
+    DatasetNotFoundError,
+    filter_datasets,
+)
 
 
-LOG_LEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
+class DownloadError(Exception):
+    """Raised when an error occured on download."""
 
 
 def register_subcommand(subparser):
@@ -20,19 +26,19 @@ def register_subcommand(subparser):
     parser.add_argument(
         "--history-id",
         default=None,
-        help="History id to filter on",
+        help="History id to download datasets from.",
     )
 
     parser.add_argument(
         "--dataset-id",
         default=None,
-        help="Dataset id to filter on",
+        help="Dataset id to download",
     )
 
     parser.add_argument(
         "--dataset-name",
         default=None,
-        help="Exact dataset name to filter on",
+        help="Dataset name (regex) to filter on",
     )
 
     parser.add_argument(
@@ -42,7 +48,11 @@ def register_subcommand(subparser):
     )
 
     parser.add_argument(
-        "-v", "--verbose", action="count", default=0, help="Enable verbosity"
+        "-i",
+        "--ignore-case",
+        default=False,
+        action="store_true",
+        help="Search for datasets ignoring case",
     )
 
     parser.set_defaults(func=handle_download)
@@ -50,12 +60,10 @@ def register_subcommand(subparser):
     return parser
 
 
-def download_dataset(dc, dataset_id, path):
+def download_dataset(gi, dataset_id, path):
     """Download dataset to disk at file path."""
-    logging.info(
-        f"Downloading dataset with id `{dataset_id}` at {os.path.relpath(path)}"
-    )
-    dc.download_dataset(
+    print("Downloading:", gi.datasets.show_dataset(dataset_id)['name'])
+    gi.datasets.download_dataset(
         dataset_id=dataset_id,
         file_path=path,
         use_default_filename=os.path.isdir(path),
@@ -64,20 +72,38 @@ def download_dataset(dc, dataset_id, path):
 
 def handle_download(args):
     """Main section, to be called as main script, or callable script."""
-    dc = galaxy.datasets.DatasetClient(args.gi)
 
-    if args.dataset_id:
-        download_dataset(dc, args.dataset_id, args.path)
-    elif args.dataset_name:
-        # get a list of recent datasets, filtered on given name, and history (if provided)
-        datasets = dc.get_datasets(
-            name=args.dataset_name,
-            history_id=args.history_id,
-            visible=True,
-            deleted=False,
-            purged=False,
-            state="ok",
-        )
+    console = rich.console.Console()
 
-        for dataset in datasets:
-            download_dataset(dc, dataset["id"], args.path)
+    try:
+        if args.dataset_id:
+            # Single dataset download by id
+            download_dataset(args.gi, args.dataset_id, args.path)
+
+        elif args.dataset_name:
+            # Single dataset by name, or multiple by regex
+            datasets = filter_datasets(args.gi, args.dataset_name, args.ignore_case, args.history_id)
+
+            if not datasets:
+                raise DatasetNotFoundError(args.dataset_name)
+
+            for dataset in track(datasets, description="Downloading matching datasets"):
+                download_dataset(args.gi, dataset['id'], args.path)
+
+        elif args.history_id:
+            # Download all datasets from history
+            datasets = filter_datasets(args.gi, ignore_case=args.ignore_case, history_id=args.history_id)
+
+            if not datasets:
+                raise DownloadError(f"No datasets found for the given history [italic yellow]{args.history_id}[/italic yellow].")
+          
+            for dataset in track(datasets, description="Downloading history datasets"):
+                download_dataset(args.gi, dataset['id'], args.path)
+
+    except (DownloadError, DatasetNotFoundError) as ex:
+        console.print(f"\n[bold red]ERROR[/bold red]: {ex}")
+        sys.exit(1)
+
+
+
+
